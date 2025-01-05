@@ -14,7 +14,6 @@ Antes de comenzar, asegúrate de cumplir con los siguientes requisitos:
 En el nodo maestro, instala K3s ejecutando el siguiente comando:
 ```bash
 curl -sfL https://get.k3s.io | sh -s - server --write-kubeconfig-mode 644
-printf "[DEBUG] Nodo maestro K3s instalado.\n"
 ```
 Guarda el token para que los nodos worker puedan unirse al cluster:
 ```bash
@@ -25,14 +24,12 @@ sudo cat /var/lib/rancher/k3s/server/node-token
 En cada nodo worker, usa el siguiente comando para instalar K3s y unirte al cluster. Sustituye `<master-ip>` por la dirección IP del nodo maestro y `<token>` por el token obtenido en el paso anterior:
 ```bash
 curl -sfL https://get.k3s.io | K3S_URL=https://<master-ip>:6443 K3S_TOKEN=<token> sh -
-printf "[DEBUG] Nodo worker K3s instalado y unido al cluster.\n"
 ```
 
 ### 1.3 Verificar el Cluster
 En el nodo maestro, verifica que todos los nodos estén activos:
 ```bash
 kubectl get nodes
-printf "[DEBUG] Estado del cluster verificado.\n"
 ```
 
 ## Paso 2: Configurar un Docker Registry en el Cluster
@@ -65,7 +62,6 @@ spec:
 Aplica el Deployment:
 ```bash
 kubectl apply -f registry-deployment.yaml
-printf "[DEBUG] Deployment del Docker Registry aplicado.\n"
 ```
 
 ### 2.2 Crear el Servicio del Docker Registry
@@ -87,7 +83,6 @@ spec:
 Aplica el Servicio:
 ```bash
 kubectl apply -f registry-service.yaml
-printf "[DEBUG] Servicio del Docker Registry aplicado y expuesto.\n"
 ```
 
 ### 2.3 Configurar el Cluster para Usar el Registry
@@ -97,7 +92,19 @@ kubectl get service registry
 ```
 Anota el puerto asignado por el NodePort. Asegúrate de que los nodos puedan acceder al Docker Registry utilizando la IP del nodo maestro y el puerto expuesto, por ejemplo: `<master-ip>:<node-port>`.
 
-### 2.4 Configurar los Equipos Clientes para Usar el Registry
+### 2.4 Configurar registry en el cluster
+Crea el archivo registries.yaml
+```bash
+sudo nano /etc/rancher/k3s/registries.yaml
+```
+```yaml
+mirrors:
+  registry.example.com:
+    endpoint:
+      - "http://url.example:5000"
+```
+
+### 2.5 Configurar los Equipos Clientes para Usar el Registry
 En los equipos que utilizarán el Docker Registry, es necesario agregar su dirección al archivo de configuración de Docker como un registry inseguro. Edita el archivo `/etc/docker/daemon.json` o créalo si no existe, y añade lo siguiente:
 ```json
 {
@@ -107,7 +114,6 @@ En los equipos que utilizarán el Docker Registry, es necesario agregar su direc
 Reinicia el servicio Docker para aplicar los cambios:
 ```bash
 sudo systemctl restart docker
-printf "[DEBUG] Docker configurado para usar el registry del cluster.\n"
 ```
 
 ## Paso 3: Desplegar una API en el Cluster
@@ -117,7 +123,6 @@ En tu máquina local o en uno de los nodos con acceso al cluster, sube la imagen
 ```bash
 docker build -t <master-ip>:<node-port>/api:latest .
 docker push <master-ip>:<node-port>/api:latest
-printf "[DEBUG] Imagen de la API subida al registry del cluster.\n"
 ```
 
 ### 3.2 Crear un Deployment en K3s
@@ -146,7 +151,6 @@ spec:
 Aplica el Deployment:
 ```bash
 kubectl apply -f api-deployment.yaml
-printf "[DEBUG] Deployment de la API aplicado.\n"
 ```
 
 ### 3.3 Exponer el Servicio
@@ -168,13 +172,11 @@ spec:
 Aplica el Servicio:
 ```bash
 kubectl apply -f api-service.yaml
-printf "[DEBUG] Servicio de la API expuesto.\n"
 ```
 
 Obtén el puerto asignado:
 ```bash
 kubectl get service api-service
-printf "[DEBUG] Información del servicio obtenida.\n"
 ```
 Accede a la API en `<node-ip>:<node-port>`.
 
