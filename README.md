@@ -65,24 +65,9 @@ kubectl apply -f registry-deployment.yaml
 ```
 
 ### 2.2 Crear el Servicio del Docker Registry
-Crea un archivo `registry-service.yaml`:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: registry
-spec:
-  selector:
-    app: registry
-  ports:
-    - protocol: TCP
-      port: 5000
-      targetPort: 5000
-  type: NodePort
-```
-Aplica el Servicio:
+Aplica el Despliegue y servicio de registry:
 ```bash
-kubectl apply -f registry-service.yaml
+kubectl apply -f registry-deployment.yaml
 ```
 
 ### 2.3 Configurar el Cluster para Usar el Registry
@@ -121,64 +106,18 @@ sudo systemctl restart docker
 ### 3.1 Crear y Subir la Imagen de la API al Registry
 En tu máquina local o en uno de los nodos con acceso al cluster, sube la imagen al registry del cluster. Sustituye `<master-ip>` y `<node-port>` con la dirección IP del nodo maestro y el puerto asignado al servicio del registry:
 ```bash
-docker build -t <master-ip>:<node-port>/api:latest .
-docker push <master-ip>:<node-port>/api:latest
+docker build -t <master-ip>:<node-port>/<service-name>:latest .
+docker push <master-ip>:<node-port>/<service-name>:latest
 ```
 
-### 3.2 Crear un Deployment en K3s
-Crea un archivo `api-deployment.yaml`:
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-deployment
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: api
-  template:
-    metadata:
-      labels:
-        app: api
-    spec:
-      containers:
-      - name: api
-        image: <master-ip>:<node-port>/api:latest
-        ports:
-        - containerPort: 80
-```
+### 3.2 Desplegar servicio
 Aplica el Deployment:
 ```bash
-kubectl apply -f api-deployment.yaml
-```
-
-### 3.3 Exponer el Servicio
-Crea un archivo `api-service.yaml`:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-service
-spec:
-  selector:
-    app: api
-  ports:
-      - protocol: TCP
-        port: 80
-        targetPort: 80
-  type: NodePort
-```
-Aplica el Servicio:
-```bash
-kubectl apply -f api-service.yaml
+kubectl apply -f service-deployment.yaml
 ```
 
 Obtén el puerto asignado:
 ```bash
-kubectl get service api-service
+kubectl get service service-name
 ```
 Accede a la API en `<node-ip>:<node-port>`.
-
-## Conclusión
-Con esto, has configurado un cluster K3s, implementado un Docker Registry dentro del cluster con acceso desde máquinas externas, configurado los equipos para usar el registry y desplegado una API utilizando dicho registry. ¡Listo para explorar más funcionalidades de K3s!
