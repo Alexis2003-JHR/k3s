@@ -203,4 +203,8 @@ Por defecto, Grafana puede estar configurado como un servicio `ClusterIP`, lo cu
    ```
 
    Busca el puerto asignado bajo la columna `PORT(S)`. Ahora podrás acceder a Grafana en la dirección IP de cualquier nodo del cluster y el puerto asignado.
-
+## Para aplicar nuevos cambios:
+Si quieres aplicar nuevos cambios sobre value.yaml los puedes aplicar con:
+```bash
+helm upgrade -n monitoring prometheus prometheus-community/kube-prometheus-stack -f values.yaml
+```
