@@ -52,7 +52,7 @@ sudo nano /etc/rancher/k3s/registries.yaml
 ```
 ```yaml
 mirrors:
-  "<master-ip>:32000":
+  registry.name.com: #Remplaza por el nombre que le vayas a poner al registry
     endpoint:
       - "http://<master-ip>:32000"
 ```
@@ -66,12 +66,20 @@ sudo systemctl restart k3s
 En los equipos que utilizarán el Docker Registry, es necesario agregar su dirección al archivo de configuración de Docker como un registry inseguro. Edita el archivo `/etc/docker/daemon.json` o créalo si no existe, y añade lo siguiente:
 ```json
 {
-  "insecure-registries": ["<master-ip>:32000"]
+  "insecure-registries": ["registry.name.com:32000"]
 }
 ```
 Reinicia el servicio Docker para aplicar los cambios:
 ```bash
 sudo systemctl restart docker
+```
+Añade la IP del registry a los hosts del equipo para poder nombrar las imagenes por el nombre del registry:
+```bash
+sudo nano /etc/hosts
+```
+Añade la linea:
+```bash
+10.43.34.135    registry.name.com
 ```
 
 ## Paso 4: Desplegar una API en el Cluster
@@ -79,8 +87,8 @@ sudo systemctl restart docker
 ### 4.1 Crear y Subir la Imagen de la API al Registry
 En tu máquina local o en uno de los nodos con acceso al cluster, sube la imagen al registry del cluster. Sustituye `<master-ip>` y `<node-port>` con la dirección IP del nodo maestro y el puerto asignado al servicio del registry:
 ```bash
-docker build -t <master-ip>:32000/<service-name>:latest .
-docker push <master-ip>:32000/<service-name>:latest
+docker build -t registry.name.com:32000/<service-name>:latest .
+docker push registry.name.com:32000/<service-name>:latest
 ```
 
 ### 4.2 Desplegar servicio
@@ -93,4 +101,4 @@ Obtén el puerto asignado:
 ```bash
 kubectl get service service-name
 ```
-Accede a la API en `<node-ip>:<node-port>`.
+Accede a la API en `<node-ip>:<service-port>`.
