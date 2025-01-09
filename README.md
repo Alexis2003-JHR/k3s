@@ -33,58 +33,9 @@ kubectl get nodes
 ```
 
 ## Paso 2: Configurar un Docker Registry en el Cluster
-
-### 2.1 Crear el Deployment del Docker Registry
-Crea un archivo `registry-deployment.yaml`:
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: registry
-  labels:
-    app: registry
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: registry
-  template:
-    metadata:
-      labels:
-        app: registry
-    spec:
-      containers:
-      - name: registry
-        image: registry:2
-        ports:
-        - containerPort: 5000
-```
 Aplica el Deployment:
 ```bash
-kubectl apply -f registry-deployment.yaml
-```
-
-### 2.2 Crear el Servicio del Docker Registry
-Crea un archivo `registry-service.yaml`:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: registry
-  labels:
-    app: registry
-spec:
-  type: NodePort
-  ports:
-    - port: 5000
-      targetPort: 5000
-      nodePort: 32000
-  selector:
-    app: registry
-```
-Aplica el Servicio:
-```bash
-kubectl apply -f registry-service.yaml
+kubectl apply -f registry.yaml
 ```
 
 ### 2.3 Configurar el Cluster para Usar el Registry
@@ -122,96 +73,6 @@ Reinicia el servicio Docker para aplicar los cambios:
 ```bash
 sudo systemctl restart docker
 ```
-
-## Paso 3: Instalar y Configurar Prometheus
-
-### 3.1 Desplegar Prometheus en el Cluster
-Crea un archivo `prometheus-deployment.yaml`:
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: prometheus
-  labels:
-    app: prometheus
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: prometheus
-  template:
-    metadata:
-      labels:
-        app: prometheus
-    spec:
-      containers:
-      - name: prometheus
-        image: prom/prometheus
-        ports:
-        - containerPort: 9090
-        volumeMounts:
-        - name: prometheus-config
-          mountPath: /etc/prometheus/prometheus.yml
-          subPath: prometheus.yml
-      volumes:
-      - name: prometheus-config
-        configMap:
-          name: prometheus-config
-```
-
-Crea un archivo `prometheus-configmap.yaml` para la configuración:
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus-config
-  labels:
-    app: prometheus
-data:
-  prometheus.yml: |
-    global:
-      scrape_interval: 15s
-    scrape_configs:
-      - job_name: 'kubernetes-services'
-        kubernetes_sd_configs:
-          - role: service
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_service_label_app]
-            action: keep
-            regex: .+ # Mantén servicios con la etiqueta "app" definida
-```
-
-Aplica los recursos:
-```bash
-kubectl apply -f prometheus-configmap.yaml
-kubectl apply -f prometheus-deployment.yaml
-```
-
-### 3.2 Exponer Prometheus
-Crea un archivo `prometheus-service.yaml`:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: prometheus
-  labels:
-    app: prometheus
-spec:
-  type: NodePort
-  ports:
-    - port: 9090
-      targetPort: 9090
-      protocol: TCP
-      nodePort: 30090
-  selector:
-    app: prometheus
-```
-
-Aplica el servicio:
-```bash
-kubectl apply -f prometheus-service.yaml
-```
-Accede a Prometheus utilizando `<node-ip>:30090` en tu navegador.
 
 ## Paso 4: Desplegar una API en el Cluster
 
