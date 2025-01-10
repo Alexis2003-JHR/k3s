@@ -2,6 +2,12 @@
 
 ## 1. Instalación de Promtail con values especificos
 ```bash
+helm repo add grafana https://grafana.github.io/helm-charts
+```
+```bash
+helm repo update
+```
+```bash
 helm upgrade --install promtail grafana/promtail -f /loki/promtail/values.yaml -n monitoring
 ```
 Revisa que los despliegues se hayan efectuado correctamente:

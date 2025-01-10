@@ -25,6 +25,15 @@ En cada nodo worker, usa el siguiente comando para instalar K3s y unirte al clus
 ```bash
 curl -sfL https://get.k3s.io | K3S_URL=https://<master-ip>:6443 K3S_TOKEN=<token> sh -
 ```
+### 1.2.1 Error en instalación de nodo
+Es posible que en la instalación se encuentre un error similar a:
+```bash
+[E0109 20:32:07.393678 1776178 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"http://localhost:8080/api?timeout=32s\": dial tcp 127.0.0.1:8080: connect: connection refused"
+```
+Para esto será necesario copiar el archivo de /etc/rancher/k3s/k3s.yaml del nodo maestro en el nodo worker en la misma ruta remplazando **server** con la ip del nodo maestro y exponer el archivo de configuración con el siguiente comando:
+```bash
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+```
 
 ### 1.3 Verificar el Cluster
 En el nodo maestro, verifica que todos los nodos estén activos:
